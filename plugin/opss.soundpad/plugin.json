@@ -1,0 +1,142 @@
+{
+  "id": "opss.soundpad",
+  "name": "Soundpad",
+  "version": "1.0.0",
+  "description": "Phone-controlled soundpad: play sounds (WAV / MP3 / FLAC / OGG / M4A) from a customizable sounds directory, mixed into the MicYou mic stream. Multi-voice, with per-session volume / seek / loop driven from the MicYou Android app, plus optional local headphone playback (instantly yielding to the host ear-return), per-sound volume memory and a VAD anti-collision guard that ducks sounds while you speak.",
+  "descriptionI18n": {
+    "zh": "手机遥控 Soundpad：播放自定义音效目录（支持子文件夹分类）中的音频（WAV/MP3/FLAC/OGG/M4A）并混入 MicYou 麦克风流。多音效同播，安卓端可控进度/音量/循环；耳机直接出声（宿主监听开启时即时让位）、按音效记忆音量、VAD 防撞（说话时音效自动压低）。",
+    "zh-CN": "手机遥控 Soundpad：播放自定义音效目录（支持子文件夹分类）中的音频（WAV/MP3/FLAC/OGG/M4A）并混入 MicYou 麦克风流。多音效同播，安卓端可控进度/音量/循环；耳机直接出声（宿主监听开启时即时让位）、按音效记忆音量、VAD 防撞（说话时音效自动压低）。"
+  },
+  "nameI18n": {
+    "zh": "Soundpad",
+    "zh-CN": "Soundpad",
+    "en": "Soundpad"
+  },
+  "author": "OrientCOMPASS",
+  "license": "Unlicense",
+  "runtime": "native",
+  "entry": "soundpad",
+  "platforms": [
+    "windows",
+    "linux",
+    "macos"
+  ],
+  "arches": [
+    "x86_64",
+    "aarch64"
+  ],
+  "apiVersion": 1,
+  "capabilities": [
+    "dsp.node",
+    "config.read",
+    "config.write",
+    "message.send",
+    "control.observe",
+    "device.list"
+  ],
+  "kind": "dsp",
+  "dsp": {
+    "insertAfter": "VAD",
+    "realtimeSafe": true
+  },
+  "ui": {
+    "route": "panel",
+    "label": "Soundpad",
+    "panels": [
+      {
+        "id": "console",
+        "label": "Console",
+        "entry": "panel.html"
+      }
+    ]
+  },
+  "keywords": [
+    "soundpad",
+    "sounds",
+    "mix",
+    "dsp",
+    "remote",
+    "android"
+  ],
+  "config": {
+    "masterVolume": 1.0,
+    "localOutput": true,
+    "localVolume": 1.0,
+    "soundsDir": "",
+    "sounds": [],
+    "sp_state": {
+      "sessions": [],
+      "sounds": [],
+      "lastError": "",
+      "masterVolume": 1.0,
+      "localOutput": true,
+      "localVolume": 1.0,
+      "localError": "",
+      "monitorOn": false,
+      "vadGuard": false
+    },
+    "soundVolumes": {},
+    "vadGuard": false,
+    "vadThreshold": 0.06
+  },
+  "configSchema": {
+    "fields": [
+      {
+        "key": "masterVolume",
+        "fieldType": "number",
+        "label": "主音量 Master Volume",
+        "description": "音效混入麦克风流（对方听到）的总增益（0.0 - 2.0，1.0 = 原始音量）。",
+        "min": 0,
+        "max": 2,
+        "step": 0.05,
+        "default": 1.0
+      },
+      {
+        "key": "localOutput",
+        "fieldType": "boolean",
+        "label": "播放到耳机 Local Headphone Output",
+        "description": "在本机默认输出设备直接播放音效（无需打开宿主监听/耳返；不会回放自己的麦克风）。未串流时也可本地试听。",
+        "default": true
+      },
+      {
+        "key": "localVolume",
+        "fieldType": "number",
+        "label": "耳机音量 Local Volume",
+        "description": "本地耳机输出的独立增益（0.0 - 2.0），与主音量互不影响。",
+        "min": 0,
+        "max": 2,
+        "step": 0.05,
+        "default": 1.0
+      },
+      {
+        "key": "soundsDir",
+        "fieldType": "string",
+        "label": "音效目录 Sounds Directory",
+        "description": "自定义音效库目录（绝对路径）。留空 = 插件目录下的 sounds/。修改后约 2 秒内生效并同步到手机端。",
+        "default": ""
+      },
+      {
+        "key": "vadGuard",
+        "fieldType": "boolean",
+        "label": "防撞（VAD Ducking）",
+        "description": "检测到你说话时自动把音效压低到 20%（让人声优先），停止说话后平滑恢复。检测基于处理链内的麦克风信号，音效不会触发自己。手机端面板也有同步开关。",
+        "default": false
+      },
+      {
+        "key": "vadThreshold",
+        "fieldType": "number",
+        "label": "防撞灵敏度阈值",
+        "description": "语音判定的归一化 RMS 阈值（越大越不敏感）。环境噪声大时调高。",
+        "min": 0.0,
+        "max": 0.5,
+        "step": 0.005,
+        "default": 0.06
+      }
+    ]
+  },
+  "repository": "https://github.com/OrientCOMPASS/MicYouSoundpad-plugin",
+  "homepage": "https://github.com/OrientCOMPASS/MicYouSoundpad-plugin",
+  "updateUrl": "https://github.com/OrientCOMPASS/MicYouSoundpad-plugin/releases/latest/download/plugin.json",
+  "downloadUrl": "https://github.com/OrientCOMPASS/MicYouSoundpad-plugin/releases/latest/download/plugin.zip",
+  "readmeUrl": "https://raw.githubusercontent.com/OrientCOMPASS/MicYouSoundpad-plugin/refs/heads/main/README.md"
+}
