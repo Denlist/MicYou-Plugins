@@ -238,6 +238,49 @@
       ]
     },
     {
+      "id": "opss.soundpad",
+      "name": "Soundpad",
+      "nameI18n": {
+        "zh": "Soundpad",
+        "zh-CN": "Soundpad",
+        "en": "Soundpad"
+      },
+      "version": "1.0.0",
+      "author": "OrientCOMPASS",
+      "description": "Phone-controlled soundpad: play sounds (WAV / MP3 / FLAC / OGG / M4A) from a customizable sounds directory, mixed into the MicYou mic stream. Multi-voice, with per-session volume / seek / loop driven from the MicYou Android app, plus optional local headphone playback (instantly yielding to the host ear-return), per-sound volume memory and a VAD anti-collision guard that ducks sounds while you speak.",
+      "descriptionI18n": {
+        "zh": "手机遥控 Soundpad：播放自定义音效目录（支持子文件夹分类）中的音频（WAV/MP3/FLAC/OGG/M4A）并混入 MicYou 麦克风流。多音效同播，安卓端可控进度/音量/循环；耳机直接出声（宿主监听开启时即时让位）、按音效记忆音量、VAD 防撞（说话时音效自动压低）。",
+        "zh-CN": "手机遥控 Soundpad：播放自定义音效目录（支持子文件夹分类）中的音频（WAV/MP3/FLAC/OGG/M4A）并混入 MicYou 麦克风流。多音效同播，安卓端可控进度/音量/循环；耳机直接出声（宿主监听开启时即时让位）、按音效记忆音量、VAD 防撞（说话时音效自动压低）。"
+      },
+      "runtime": "native",
+      "kind": "dsp",
+      "capabilities": [
+        "dsp.node",
+        "config.read",
+        "config.write",
+        "message.send",
+        "control.observe",
+        "device.list"
+      ],
+      "license": "Unlicense",
+      "homepage": "https://github.com/OrientCOMPASS/MicYouSoundpad-plugin",
+      "repository": "https://github.com/OrientCOMPASS/MicYouSoundpad-plugin",
+      "manifestUrl": "https://micyou-dev.github.io/MicYou-Plugins/plugin/opss.soundpad/plugin.json",
+      "downloadUrl": "https://github.com/OrientCOMPASS/MicYouSoundpad-plugin/releases/latest/download/plugin.zip",
+      "previewUrl": "https://micyou-dev.github.io/MicYou-Plugins/plugin/opss.soundpad/preview.png",
+      "pageUrl": "https://github.com/MicYou-Dev/MicYou-Plugins/tree/main/plugin/opss.soundpad",
+      "readmeUrl": "https://raw.githubusercontent.com/OrientCOMPASS/MicYouSoundpad-plugin/refs/heads/main/README.md",
+      "arches": [
+        "x86_64",
+        "aarch64"
+      ],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ]
+    },
+    {
       "id": "opss.voice-typing",
       "name": "Voice-Typing",
       "nameI18n": {
