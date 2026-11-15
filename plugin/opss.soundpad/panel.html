@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Soundpad</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 18px 20px 28px;
+    font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    color: hsl(var(--on-surface));
+    background: transparent;
+    font-size: 14px; line-height: 1.55;
+  }
+  h2 { margin: 0 0 2px; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+  .sub { color: hsl(var(--on-surface-variant)); font-size: 12px; margin-bottom: 16px; }
+  .card {
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--surface-container));
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 14px;
+  }
+  .row { display: flex; align-items: center; gap: 12px; margin: 10px 0; }
+  .row label { flex: none; min-width: 86px; color: hsl(var(--on-surface-variant)); }
+  input[type=range] { flex: 1; accent-color: hsl(var(--primary)); }
+  .val { min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+  button {
+    border: 1px solid hsl(var(--outline)); background: hsl(var(--surface-bright));
+    color: hsl(var(--on-surface)); padding: 8px 18px; border-radius: 999px;
+    font-size: 13.5px; cursor: pointer;
+    white-space: nowrap; flex: none;
+  }
+  button.primary { background: hsl(var(--primary)); color: hsl(var(--on-primary)); border-color: transparent; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.danger { background: hsl(var(--error)); color: #fff; border-color: transparent; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }
+  .pad {
+    border: 1px solid hsl(var(--outline)); border-radius: 12px;
+    background: hsl(var(--surface-bright));
+    padding: 10px 8px; text-align: center; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    user-select: none;
+  }
+  .pad:hover { border-color: hsl(var(--primary)); }
+  .pad:active { transform: scale(.97); }
+  .pad .icon { font-size: 20px; }
+  .pad .name {
+    font-size: 12.5px; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pad .dur { font-size: 11px; color: hsl(var(--on-surface-variant)); }
+  .sessions { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .session {
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid hsl(var(--border)); border-radius: 10px;
+    padding: 8px 12px; background: hsl(var(--surface));
+  }
+  .session .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: hsl(var(--primary)); animation: pulse 1.4s infinite; }
+  .session.loading .dot { background: hsl(var(--tertiary)); }
+  .session.stopping .dot { background: hsl(var(--outline)); animation: none; }
+  @keyframes pulse { 50% { opacity: .4; } }
+  .session .nm { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .session .tm { font-size: 12px; color: hsl(var(--on-surface-variant)); font-variant-numeric: tabular-nums; flex: none; }
+  .session .spacer { flex: 1; }
+  .session button { padding: 4px 12px; font-size: 12.5px; }
+  .err {
+    display: none; margin-top: 10px; padding: 8px 12px; border-radius: 10px;
+    background: hsl(var(--error) / .1); color: hsl(var(--error)); font-size: 12.5px;
+    white-space: pre-wrap;
+  }
+  .hint { color: hsl(var(--on-surface-variant)); font-size: 12px; margin-top: 6px; }
+  .empty { color: hsl(var(--on-surface-variant)); font-size: 13px; padding: 14px 0; text-align: center; }
+  code {
+    background: hsl(var(--surface-variant)); border-radius: 6px; padding: 1px 6px;
+    font-family: ui-monospace, Consolas, monospace; font-size: 12px; word-break: break-all;
+  }
+  .badge {
+    font-size: 11px; padding: 1px 8px; border-radius: 999px;
+    border: 1px solid hsl(var(--outline)); color: hsl(var(--on-surface-variant));
+  }
+  .switch { display: flex; align-items: center; gap: 8px; }
+  .switch input { accent-color: hsl(var(--primary)); width: 16px; height: 16px; }
+  input[type=text] {
+    flex: 1; min-width: 0; padding: 7px 10px; border-radius: 10px;
+    border: 1px solid hsl(var(--outline)); background: hsl(var(--surface));
+    color: hsl(var(--on-surface)); font-size: 12.5px;
+    font-family: ui-monospace, Consolas, monospace;
+  }
+</style>
+</head>
+<body>
+  <h2>🎵 Soundpad</h2>
+  <div class="sub" id="subTitle"></div>
+
+  <div class="card">
+    <div class="row" style="margin-top:0">
+      <strong id="playingTitle"></strong>
+      <span class="badge" id="peerBadge" style="display:none"></span>
+      <span class="badge" id="monitorBadge" style="display:none"></span>
+      <span style="flex:1"></span>
+      <button class="danger" id="stopAllBtn" disabled></button>
+    </div>
+    <div class="sessions" id="sessionList"></div>
+    <div class="empty" id="noSessions"></div>
+    <div class="err" id="errBox"></div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="margin-top:0">
+      <strong id="soundsTitle"></strong>
+      <span style="flex:1"></span>
+      <button id="rescanBtn"></button>
+    </div>
+    <div class="grid" id="padGrid"></div>
+    <div class="empty" id="noSounds" style="display:none"></div>
+    <div class="row">
+      <label id="masterLabel"></label>
+      <input type="range" id="master" min="0" max="2" step="0.05" value="1" />
+      <span class="val" id="masterVal">100%</span>
+    </div>
+    <div class="row switch">
+      <input type="checkbox" id="localChk" checked />
+      <label for="localChk" id="localLabel" style="min-width:0"></label>
+      <span style="flex:1"></span>
+      <label id="localVolLabel" style="min-width:0"></label>
+      <input type="range" id="localVol" min="0" max="2" step="0.05" value="1" style="max-width:160px" />
+      <span class="val" id="localVolVal">100%</span>
+    </div>
+    <div class="row switch">
+      <input type="checkbox" id="vadChk" />
+      <label for="vadChk" id="vadLabel" style="min-width:0"></label>
+      <span style="flex:1"></span>
+      <label id="vadThrLabel" style="min-width:0"></label>
+      <input type="range" id="vadThr" min="0" max="0.5" step="0.005" value="0.06" style="max-width:140px" />
+      <span class="val" id="vadThrVal">0.060</span>
+    </div>
+    <div class="row">
+      <label id="dirLabel"></label>
+      <input type="text" id="dirInput" placeholder="" />
+      <button id="dirApply"></button>
+    </div>
+    <div class="hint" id="dirHint"></div>
+    <div class="err" id="localErrBox"></div>
+  </div>
+
+<script>
+function call(api, args) {
+  return new Promise((resolve, reject) => {
+    const id = Math.random().toString(36).slice(2);
+    const onMsg = (e) => {
+      if (e.data && e.data.__micyou === 1 && e.data.id === id) {
+        window.removeEventListener('message', onMsg);
+        e.data.ok ? resolve(e.data.value) : reject(new Error(e.data.error));
+      }
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ __micyou: 1, id, api, args: args || {} }, '*');
+  });
+}
+
+const T = {
+  'zh-CN': {
+    sub: '手机遥控 Soundpad：播放音效混入麦克风流（对方与耳返都能听到）。把音频文件（WAV/MP3/FLAC/OGG/M4A）放进插件的 sounds/ 目录即可出现在下方与手机端。',
+    playing: '正在播放', noSessions: '当前没有播放中的音效',
+    stopAll: '全部停止', stop: '停止',
+    sounds: '音效库', rescan: '重新扫描',
+    noSounds: '没有音效——把音频文件（WAV/MP3/FLAC/OGG/M4A）放进 sounds/ 目录后点「重新扫描」',
+    master: '主音量', dir: '音效目录：',
+    peer: '手机已连接', errPrefix: '错误：',
+    loading: '解码中…', monitorOn: '宿主监听中 · 耳机输出已自动暂停',
+    local: '播放到耳机（无需打开监听）', localVol: '耳机音量',
+    vad: '防撞（说话时音效压低到 20%）', vadThr: '阈值',
+    monitorOn2: '宿主监听中 · 耳机输出已即时让位',
+    dirLabel: '自定义目录', dirApply: '应用',
+    dirPlaceholder: '留空 = 插件目录/sounds（绝对路径）',
+    dirHint: '当前目录：', localErrPrefix: '耳机输出不可用：',
+  },
+  en: {
+    sub: 'Phone-remoteable soundpad: plays sounds into the mic stream (peers and your monitor hear them). Drop audio files (WAV/MP3/FLAC/OGG/M4A) into the plugin\u2019s sounds/ folder to list them here and on the phone.',
+    playing: 'Now playing', noSessions: 'Nothing is playing',
+    stopAll: 'Stop all', stop: 'Stop',
+    sounds: 'Sound library', rescan: 'Rescan',
+    noSounds: 'No sounds \u2014 drop audio files (WAV/MP3/FLAC/OGG/M4A) into the sounds/ folder, then hit Rescan',
+    master: 'Master volume', dir: 'Sounds folder: ',
+    peer: 'phone connected', errPrefix: 'Error: ',
+    loading: 'decoding\u2026', monitorOn: 'host monitor on \u00b7 local output auto-paused',
+    local: 'Play to headphones (no monitor needed)', localVol: 'Local volume',
+    vad: 'Anti-collision (duck sounds to 20% while you speak)', vadThr: 'Threshold',
+    monitorOn2: 'host monitor on \u00b7 local output yields instantly',
+    dirLabel: 'Custom folder', dirApply: 'Apply',
+    dirPlaceholder: 'empty = <plugin dir>/sounds (absolute path)',
+    dirHint: 'Current folder: ', localErrPrefix: 'Headphone output unavailable: ',
+  },
+};
+let t = T['zh-CN'];
+const $ = (id) => document.getElementById(id);
+let lastLocalVol = 1;
+
+function fmtTime(ms) {
+  if (!ms || ms < 0) ms = 0;
+  const s = Math.floor(ms / 1000);
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+let lastMaster = 1;
+
+function render(cfg) {
+  const st = (cfg && cfg.sp_state) || { sessions: [], sounds: [], lastError: '', masterVolume: 1, soundsDir: '', peer: '' };
+  const sessions = st.sessions || [];
+  const sounds = st.sounds || [];
+
+  // ── sessions ──
+  $('sessionList').innerHTML = '';
+  for (const s of sessions) {
+    const div = document.createElement('div');
+    div.className = 'session ' + (s.phase || '');
+    const dot = document.createElement('span'); dot.className = 'dot';
+    const nm = document.createElement('span'); nm.className = 'nm';
+    nm.textContent = s.label || s.id || ('#' + s.sessionId);
+    const tm = document.createElement('span'); tm.className = 'tm';
+    tm.textContent = s.phase === 'loading'
+      ? t.loading
+      : fmtTime(s.positionMs) + ' / ' + fmtTime(s.durationMs) + (s.loop ? '  🔁' : '');
+    const sp = document.createElement('span'); sp.className = 'spacer';
+    const btn = document.createElement('button');
+    btn.textContent = t.stop;
+    btn.disabled = s.phase === 'stopping';
+    btn.addEventListener('click', () => trigger('stop', { sessionId: s.sessionId }));
+    div.append(dot, nm, tm, sp, btn);
+    $('sessionList').appendChild(div);
+  }
+  $('noSessions').style.display = sessions.length ? 'none' : 'block';
+  $('noSessions').textContent = t.noSessions;
+  $('stopAllBtn').disabled = sessions.length === 0;
+
+  const err = st.lastError || '';
+  $('errBox').style.display = err ? 'block' : 'none';
+  if (err) $('errBox').textContent = t.errPrefix + err;
+
+  const peer = st.peer || '';
+  $('peerBadge').style.display = peer ? 'inline-block' : 'none';
+  $('peerBadge').textContent = '📱 ' + t.peer;
+
+  const mon = !!st.monitorOn && st.localOutput !== false;
+  $('monitorBadge').style.display = mon ? 'inline-block' : 'none';
+  $('monitorBadge').textContent = '🎧 ' + t.monitorOn2;
+
+  // ── sound grid ──
+  $('padGrid').innerHTML = '';
+  for (const s of sounds) {
+    const div = document.createElement('div');
+    div.className = 'pad';
+    div.title = s.id;
+    const icon = document.createElement('span'); icon.className = 'icon'; icon.textContent = '🔊';
+    const nm = document.createElement('span'); nm.className = 'name'; nm.textContent = s.label || s.id;
+    const dur = document.createElement('span'); dur.className = 'dur';
+    dur.textContent = (s.dir ? s.dir + ' · ' : '') + fmtTime(s.durationMs);
+    div.append(icon, nm, dur);
+    div.addEventListener('click', () => trigger('play', { id: s.id }));
+    $('padGrid').appendChild(div);
+  }
+  $('noSounds').style.display = sounds.length ? 'none' : 'block';
+  $('noSounds').textContent = t.noSounds;
+
+  if (st.soundsDir) $('dirHint').innerHTML = t.dirHint + '<code></code>';
+  if (st.soundsDir) $('dirHint').querySelector('code').textContent = st.soundsDir;
+
+  if (typeof st.masterVolume === 'number' && Math.abs(st.masterVolume - lastMaster) > 1e-6 && !$('master').matches(':active')) {
+    $('master').value = st.masterVolume;
+  }
+  lastMaster = Number($('master').value);
+  $('masterVal').textContent = Math.round(lastMaster * 100) + '%';
+
+  if (typeof st.localOutput === 'boolean') $('localChk').checked = st.localOutput;
+  if (typeof st.vadGuard === 'boolean') $('vadChk').checked = st.vadGuard;
+  if (typeof st.vadThreshold === 'number' && !$('vadThr').matches(':active')) {
+    $('vadThr').value = st.vadThreshold;
+  }
+  $('vadThrVal').textContent = Number($('vadThr').value).toFixed(3);
+  if (typeof st.localVolume === 'number' && Math.abs(st.localVolume - lastLocalVol) > 1e-6 && !$('localVol').matches(':active')) {
+    $('localVol').value = st.localVolume;
+  }
+  lastLocalVol = Number($('localVol').value);
+  $('localVolVal').textContent = Math.round(lastLocalVol * 100) + '%';
+  if (!$('dirInput').matches(':focus')) {
+    $('dirInput').value = (cfg && typeof cfg.soundsDir === 'string') ? cfg.soundsDir : '';
+  }
+
+  const lerr = st.localError || '';
+  $('localErrBox').style.display = lerr ? 'block' : 'none';
+  if (lerr) $('localErrBox').textContent = t.localErrPrefix + lerr;
+}
+
+async function trigger(action, payload) {
+  // 宿主桥接契约：plugin_trigger 的 payload 必须是字符串（或 null）——
+  // 传对象会被 Tauri 命令反序列化拒绝（此前播放/停止按钮无效的根因）。
+  try {
+    await call('trigger', { action, payload: JSON.stringify(payload || {}) });
+  } catch (e) {
+    console.warn(e);
+    const box = $('errBox');
+    box.style.display = 'block';
+    box.textContent = t.errPrefix + (e && e.message ? e.message : e);
+  }
+  setTimeout(refresh, 250);
+}
+
+function applyTexts() {
+  $('subTitle').textContent = t.sub;
+  $('playingTitle').textContent = t.playing;
+  $('stopAllBtn').textContent = t.stopAll;
+  $('soundsTitle').textContent = t.sounds;
+  $('rescanBtn').textContent = t.rescan;
+  $('masterLabel').textContent = t.master;
+  $('localLabel').textContent = t.local;
+  $('localVolLabel').textContent = t.localVol;
+  $('vadLabel').textContent = t.vad;
+  $('vadThrLabel').textContent = t.vadThr;
+  $('dirLabel').textContent = t.dirLabel;
+  $('dirApply').textContent = t.dirApply;
+  $('dirInput').placeholder = t.dirPlaceholder;
+}
+
+async function refresh() {
+  try {
+    const cfg = await call('get_config', {});
+    render(cfg);
+  } catch (e) { /* host unavailable yet */ }
+}
+
+$('master').addEventListener('input', () => {
+  $('masterVal').textContent = Math.round(Number($('master').value) * 100) + '%';
+  lastMaster = Number($('master').value);
+});
+$('master').addEventListener('change', async () => {
+  const v = Number($('master').value);
+  try {
+    await call('set_config', { key: 'masterVolume', value: v });
+    await call('trigger', { action: 'apply' });
+  } catch (e) { console.warn(e); }
+});
+$('stopAllBtn').addEventListener('click', () => trigger('stop', {}));
+$('rescanBtn').addEventListener('click', () => trigger('rescan', {}));
+
+$('localVol').addEventListener('input', () => {
+  $('localVolVal').textContent = Math.round(Number($('localVol').value) * 100) + '%';
+  lastLocalVol = Number($('localVol').value);
+});
+$('localVol').addEventListener('change', async () => {
+  const v = Number($('localVol').value);
+  try {
+    await call('set_config', { key: 'localVolume', value: v });
+    await call('trigger', { action: 'apply' });
+  } catch (e) { console.warn(e); }
+});
+$('localChk').addEventListener('change', async () => {
+  try {
+    await call('set_config', { key: 'localOutput', value: $('localChk').checked });
+    await call('trigger', { action: 'apply' });
+  } catch (e) { console.warn(e); }
+  setTimeout(refresh, 300);
+});
+$('vadChk').addEventListener('change', async () => {
+  try {
+    await call('set_config', { key: 'vadGuard', value: $('vadChk').checked });
+    await call('trigger', { action: 'apply' });
+  } catch (e) { console.warn(e); }
+  setTimeout(refresh, 300);
+});
+$('vadThr').addEventListener('input', () => {
+  $('vadThrVal').textContent = Number($('vadThr').value).toFixed(3);
+});
+$('vadThr').addEventListener('change', async () => {
+  try {
+    await call('set_config', { key: 'vadThreshold', value: Number($('vadThr').value) });
+    await call('trigger', { action: 'apply' });
+  } catch (e) { console.warn(e); }
+});
+$('dirApply').addEventListener('click', async () => {
+  const v = $('dirInput').value.trim();
+  try {
+    await call('set_config', { key: 'soundsDir', value: v });
+    await call('trigger', { action: 'apply' });
+  } catch (e) { console.warn(e); }
+  setTimeout(refresh, 600);
+});
+
+(async function init() {
+  try {
+    const lang = await call('locale');
+    t = String(lang).startsWith('zh') ? T['zh-CN'] : T.en;
+  } catch (e) { /* keep zh-CN */ }
+  applyTexts();
+  await refresh();
+  setInterval(refresh, 700);
+})();
+</script>
+</body>
+</html>
